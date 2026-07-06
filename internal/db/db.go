@@ -3,11 +3,10 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/uptix/uptix/internal/models"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 type DB struct {
@@ -18,7 +17,7 @@ func New(path, driver string) (*DB, error) {
 	if driver == "" {
 		driver = "sqlite"
 	}
-	conn, err := sql.Open("sqlite3", path+"?_journal_mode=WAL&_foreign_keys=on")
+	conn, err := sql.Open("sqlite", path+"?_journal_mode=WAL&_foreign_keys=on")
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
@@ -305,6 +304,3 @@ func scanIncidents(rows *sql.Rows) ([]models.Incident, error) {
 	}
 	return incidents, nil
 }
-
-// Ensure we can use time types
-var _ = time.Now

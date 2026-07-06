@@ -17,15 +17,13 @@ import (
 
 type Server struct {
 	db      *db.DB
-	mon     interface{ ListMonitors() ([]models.Monitor, error) }
 	port    int
 	httpSrv *http.Server
 }
 
-func New(database *db.DB, monitor interface{ ListMonitors() ([]models.Monitor, error) }, port int) *Server {
+func New(database *db.DB, port int) *Server {
 	return &Server{
 		db:   database,
-		mon:  monitor,
 		port: port,
 	}
 }

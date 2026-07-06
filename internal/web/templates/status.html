@@ -82,7 +82,7 @@
   {{range .Incidents}}
   <div class="incident {{.Status}}">
     <div class="title">{{.Title}}</div>
-    <div class="meta">{{.Status | title}} · {{.Severity | title}} · {{.CreatedAt.Format "Jan 2, 15:04 UTC"}}</div>
+    <div class="meta">{{.Status}} · {{.Severity}} · {{.CreatedAt.Format "Jan 2, 15:04 UTC"}}</div>
   </div>
   {{end}}
   {{end}}

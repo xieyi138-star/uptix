@@ -9,7 +9,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/uptix/uptix/internal/db"
-	"github.com/uptix/uptix/internal/monitor"
 	"github.com/uptix/uptix/internal/server"
 )
 
@@ -28,13 +27,7 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to run migrations")
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	mon := monitor.New(database)
-	go mon.Run(ctx)
-
-	srv := server.New(database, mon, cfg.Port)
+	srv := server.New(database, cfg.Port)
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
@@ -48,7 +41,6 @@ func main() {
 
 	<-sigCh
 	log.Info().Msg("shutting down")
-	cancel()
 	srv.Shutdown(context.Background())
 }
 
