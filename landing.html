@@ -431,7 +431,7 @@
       var html = '';
       for (var i = 0; i < Math.min(monitors.length, 5); i++) {
         var m = monitors[i];
-        var dotClass = m.status === 'up' ? 'green' : m.status === 'degraded' ? 'yellow' : 'red';
+        var dotClass = m.status === 'up' ? 'green' : m.status === 'degraded' ? 'amber' : 'red';
         html += '<span class="dot ' + dotClass + '"></span><span class="service-name">' + m.name + '</span><span class="uptime">' + m.uptime_percent.toFixed(2) + '%</span><span class="ms">' + m.response_time_ms + 'ms</span>';
       }
       bar.innerHTML = html;

@@ -7,3 +7,4 @@
 /static/node_modules/
 .DS_Store
 *.exe~
+uptix_linux
