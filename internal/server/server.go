@@ -35,6 +35,20 @@ func (s *Server) Start() error {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Timeout(30 * time.Second))
 
+	// CORS for cross-origin status page embeds
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	// Public status page
 	r.Get("/", s.publicStatusPage)
 	r.Get("/status.json", s.publicStatusJSON)
