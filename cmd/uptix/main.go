@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/uptix/uptix/internal/db"
+	"github.com/uptix/uptix/internal/monitor"
 	"github.com/uptix/uptix/internal/server"
 )
 
@@ -27,6 +28,12 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to run migrations")
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	mon := monitor.New(database)
+	go mon.Run(ctx)
+
 	srv := server.New(database, cfg.Port)
 
 	sigCh := make(chan os.Signal, 1)
@@ -41,6 +48,7 @@ func main() {
 
 	<-sigCh
 	log.Info().Msg("shutting down")
+	cancel()
 	srv.Shutdown(context.Background())
 }
 
@@ -64,7 +72,6 @@ func loadConfig() config {
 		cfg.DBPath = os.Getenv("UPTIX_DB_PATH")
 	}
 	if os.Getenv("UPTIX_DB_DRIVER") == "postgres" {
-		cfg.DBDriver = "postgres"
 		cfg.DBPath = os.Getenv("DATABASE_URL")
 	}
 	return cfg
