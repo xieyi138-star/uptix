@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uptix — Admin</title>
+<style>
+  :root { --bg: #0a0a0c; --card: #111115; --border: #1e1e24; --text: #e4e4e8; --dim: #71717a; --green: #22c55e; --amber: #f59e0b; --red: #ef4444; --blue: #818cf8; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+  .layout { display:flex; min-height:100vh; }
+  .sidebar { width:220px; background:var(--card); border-right:1px solid var(--border); padding:20px; }
+  .sidebar h2 { font-size:16px; margin-bottom:24px; }
+  .sidebar nav a { display:block; padding:8px 12px; color:var(--dim); text-decoration:none; font-size:13px; border-radius:6px; margin-bottom:4px; }
+  .sidebar nav a:hover, .sidebar nav a.active { color:var(--text); background:rgba(255,255,255,0.05); }
+  .main { flex:1; padding:24px 32px; overflow-y:auto; }
+  .main h1 { font-size:20px; margin-bottom:20px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:20px; margin-bottom:16px; }
+  .card h3 { font-size:15px; margin-bottom:12px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; padding:8px 10px; color:var(--dim); font-weight:500; border-bottom:1px solid var(--border); }
+  td { padding:8px 10px; border-bottom:1px solid var(--border); }
+  .badge { display:inline-block; padding:2px 8px; border-radius:8px; font-size:11px; font-weight:600; }
+  .badge.up { background:rgba(34,197,94,0.1); color:var(--green); }
+  .badge.down { background:rgba(239,68,68,0.1); color:var(--red); }
+  .badge.investigating { background:rgba(245,158,11,0.1); color:var(--amber); }
+  .badge.resolved { background:rgba(34,197,94,0.1); color:var(--green); }
+  .btn { display:inline-block; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:none; background:var(--blue); color:#fff; text-decoration:none; }
+  .btn.small { padding:4px 10px; font-size:11px; }
+  .btn.danger { background:var(--red); }
+  .btn:hover { opacity:0.85; }
+  .stat-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:12px; margin-bottom:24px; }
+  .stat { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:20px; }
+  .stat .value { font-size:28px; font-weight:800; }
+  .stat .label { font-size:12px; color:var(--dim); margin-top:2px; }
+  form { margin-top:12px; }
+  form input, form select { padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:13px; margin-right:8px; margin-bottom:8px; }
+  form input:focus, form select:focus { border-color:var(--blue); outline:none; }
+  .form-row { display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="sidebar">
+    <h2>⚡ Uptix</h2>
+    <nav>
+      <a href="#" class="active" onclick="showTab('overview')">Overview</a>
+      <a href="#" onclick="showTab('monitors')">Monitors</a>
+      <a href="#" onclick="showTab('incidents')">Incidents</a>
+      <a href="#" onclick="showTab('subscribers')">Subscribers</a>
+      <a href="/" target="_blank">View Status Page →</a>
+    </nav>
+  </div>
+  <div class="main" id="main-content">
+
+    <!-- Overview Tab -->
+    <div id="tab-overview">
+      <h1>Overview</h1>
+      <div class="stat-grid">
+        <div class="stat"><div class="value">{{len .Monitors}}</div><div class="label">Monitors</div></div>
+        <div class="stat"><div class="value">{{len .Incidents}}</div><div class="label">Active Incidents</div></div>
+        <div class="stat"><div class="value">{{len .Subs}}</div><div class="label">Subscribers</div></div>
+      </div>
+      <div class="card">
+        <h3>Recent Monitors</h3>
+        <table>
+          <tr><th>Name</th><th>Type</th><th>Status</th><th>Uptime</th></tr>
+          {{range .Monitors}}
+          <tr><td>{{.Name}}</td><td>{{.Type}}</td><td><span class="badge {{.Status}}">{{.Status}}</span></td><td>{{printf "%.2f" .UptimePercent}}%</td></tr>
+          {{else}}<tr><td colspan="4" style="color:var(--dim)">No monitors yet. Add one below.</td></tr>{{end}}
+        </table>
+      </div>
+    </div>
+
+    <!-- Monitors Tab -->
+    <div id="tab-monitors" style="display:none">
+      <h1>Monitors</h1>
+      <div class="card">
+        <h3>Add Monitor</h3>
+        <form onsubmit="addMonitor(event)" class="form-row">
+          <input type="text" id="mon-name" placeholder="Name (e.g. API Gateway)" required>
+          <input type="text" id="mon-url" placeholder="URL (e.g. https://api.example.com)" required>
+          <select id="mon-type">
+            <option value="http">HTTP</option><option value="tcp">TCP</option><option value="dns">DNS</option><option value="ssl">SSL</option>
+          </select>
+          <input type="number" id="mon-interval" value="60" style="width:80px" title="Check interval (seconds)">
+          <button type="submit" class="btn">Add</button>
+        </form>
+      </div>
+      <div class="card">
+        <table>
+          <tr><th>Name</th><th>URL</th><th>Type</th><th>Status</th><th>Uptime</th><th>Last Check</th></tr>
+          {{range .Monitors}}
+          <tr><td>{{.Name}}</td><td>{{.URL}}</td><td>{{.Type}}</td><td><span class="badge {{.Status}}">{{.Status}}</span></td><td>{{printf "%.2f" .UptimePercent}}%</td><td>{{.LastCheckedAt.Format "15:04:05"}}</td></tr>
+          {{end}}
+        </table>
+      </div>
+    </div>
+
+    <!-- Incidents Tab -->
+    <div id="tab-incidents" style="display:none">
+      <h1>Incidents</h1>
+      <div class="card">
+        <h3>Create Incident</h3>
+        <form onsubmit="createIncident(event)" class="form-row">
+          <input type="text" id="inc-title" placeholder="Title" required>
+          <input type="text" id="inc-desc" placeholder="Description">
+          <select id="inc-severity"><option value="minor">Minor</option><option value="major">Major</option><option value="critical">Critical</option></select>
+          <button type="submit" class="btn">Create</button>
+        </form>
+      </div>
+      {{range .Incidents}}
+      <div class="card">
+        <h3>{{.Title}} <span class="badge {{.Status}}">{{.Status}}</span> <span style="color:var(--dim);font-size:12px">· {{.CreatedAt.Format "Jan 2, 15:04"}}</span></h3>
+        <p style="color:var(--dim);font-size:13px;margin-bottom:8px;">{{.Description}}</p>
+        <button class="btn small" onclick="updateIncident({{.ID}},'identified')">Identified</button>
+        <button class="btn small" onclick="updateIncident({{.ID}},'monitoring')">Monitoring</button>
+        <button class="btn small danger" onclick="resolveIncident({{.ID}})">Resolve</button>
+      </div>
+      {{else}}<p style="color:var(--dim)">No active incidents. 🎉</p>{{end}}
+    </div>
+
+    <!-- Subscribers Tab -->
+    <div id="tab-subscribers" style="display:none">
+      <h1>Subscribers</h1>
+      <div class="card">
+        <table>
+          <tr><th>Type</th><th>Email / URL</th><th>Subscribed</th></tr>
+          {{range .Subs}}
+          <tr><td>{{.Type}}</td><td>{{if .Email}}{{.Email}}{{else}}{{.WebhookURL}}{{end}}</td><td>{{.CreatedAt.Format "Jan 2, 2006"}}</td></tr>
+          {{else}}<tr><td colspan="3" style="color:var(--dim)">No subscribers yet.</td></tr>{{end}}
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  function showTab(name) {
+    ['overview','monitors','incidents','subscribers'].forEach(function(t) {
+      document.getElementById('tab-'+t).style.display = t===name ? 'block' : 'none';
+    });
+  }
+  var TOKEN = 'uptix-admin';
+  function api(path, method, body) {
+    return fetch('/api'+path, {
+      method:method,
+      headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+TOKEN},
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function(r){return r.json();});
+  }
+  function addMonitor(e) {
+    e.preventDefault();
+    api('/monitors','POST',{
+      name:document.getElementById('mon-name').value,
+      url:document.getElementById('mon-url').value,
+      type:document.getElementById('mon-type').value,
+      interval_secs:parseInt(document.getElementById('mon-interval').value)||60,
+      timeout_secs:30
+    }).then(function(){location.reload();});
+  }
+  function createIncident(e) {
+    e.preventDefault();
+    api('/incidents','POST',{
+      title:document.getElementById('inc-title').value,
+      description:document.getElementById('inc-desc').value,
+      severity:document.getElementById('inc-severity').value
+    }).then(function(){location.reload();});
+  }
+  function updateIncident(id, status) {
+    var msg = prompt('Update message:');
+    if (!msg) return;
+    api('/incidents/'+id,'PUT',{status:status,message:msg}).then(function(){location.reload();});
+  }
+  function resolveIncident(id) {
+    var msg = prompt('Resolution message:');
+    if (!msg) return;
+    api('/incidents/'+id+'/resolve','POST',{message:msg}).then(function(){location.reload();});
+  }
+</script>
+</body>
+</html>

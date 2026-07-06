@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  uptix:
+    image: uptix/uptix:latest
+    container_name: uptix
+    ports:
+      - "8080:8080"
+    volumes:
+      - uptix_data:/data
+    environment:
+      - UPTIX_DB_PATH=/data/uptix.db
+      - UPTIX_PORT=8080
+    restart: unless-stopped
+
+volumes:
+  uptix_data:

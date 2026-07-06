@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uptix — The self-hosted status page that doesn't suck</title>
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --card: #111115;
+    --border: #1e1e24;
+    --text: #e4e4e8;
+    --dim: #71717a;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --accent: #818cf8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 100px 0 60px;
+  }
+  .badge {
+    display: inline-block;
+    background: rgba(129, 140, 248, 0.1);
+    color: var(--accent);
+    border: 1px solid rgba(129, 140, 248, 0.2);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 24px;
+  }
+  .hero h1 {
+    font-size: 52px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #e4e4e8 0%, #a1a1aa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p {
+    font-size: 18px;
+    color: var(--dim);
+    max-width: 540px;
+    margin: 0 auto 36px;
+  }
+  .btn-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 28px; border-radius: 10px;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer; text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .btn-primary {
+    background: #fff; color: #0a0a0c;
+    border: none;
+  }
+  .btn-primary:hover { background: #e4e4e8; transform: translateY(-1px); }
+  .btn-secondary {
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: #3f3f46; background: rgba(255,255,255,0.03); }
+
+  /* Demo status bar */
+  .demo-status {
+    max-width: 720px;
+    margin: 48px auto 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 14px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot.green { background: var(--green); box-shadow: 0 0 8px rgba(34,197,94,0.4); }
+  .dot.amber { background: var(--amber); box-shadow: 0 0 8px rgba(245,158,11,0.4); }
+  .dot.red   { background: var(--red);   box-shadow: 0 0 8px rgba(239,68,68,0.4); }
+  .service-name { font-weight: 600; min-width: 100px; }
+  .uptime { color: var(--dim); font-size: 12px; margin-left: auto; }
+
+  /* Pain section */
+  .pain {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px;
+    margin: 80px auto;
+  }
+  .pain h2 { font-size: 28px; margin-bottom: 8px; }
+  .pain > p { color: var(--dim); margin-bottom: 32px; }
+  .pain-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
+  .pain-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+  }
+  .pain-card .icon { font-size: 24px; margin-bottom: 12px; }
+  .pain-card h3 { font-size: 15px; margin-bottom: 6px; }
+  .pain-card p { font-size: 13px; color: var(--dim); }
+
+  /* Features */
+  .features { padding: 0 0 80px; }
+  .features h2 { font-size: 28px; text-align: center; margin-bottom: 12px; }
+  .features > p { text-align: center; color: var(--dim); margin-bottom: 48px; }
+  .feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .feat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    transition: border-color 0.2s;
+  }
+  .feat-card:hover { border-color: #3f3f46; }
+  .feat-card .f-icon { font-size: 28px; margin-bottom: 14px; }
+  .feat-card h3 { font-size: 16px; margin-bottom: 6px; }
+  .feat-card p { font-size: 13px; color: var(--dim); }
+
+  /* One-liner */
+  .oneliner {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 0 auto 80px;
+    max-width: 720px;
+  }
+  .oneliner code {
+    display: block;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 15px;
+    color: var(--green);
+  }
+
+  /* Pricing */
+  .pricing { padding: 0 0 80px; }
+  .pricing h2 { font-size: 28px; text-align: center; margin-bottom: 12px; }
+  .pricing > p { text-align: center; color: var(--dim); margin-bottom: 48px; }
+  .price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+  .price-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    position: relative;
+  }
+  .price-card.featured { border-color: var(--accent); }
+  .price-card.featured::before {
+    content: 'Most popular';
+    position: absolute;
+    top: -12px; left: 50%; transform: translateX(-50%);
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 12px;
+    border-radius: 10px;
+  }
+  .price-card h3 { font-size: 18px; margin-bottom: 4px; }
+  .price-card .price { font-size: 36px; font-weight: 800; margin: 12px 0 4px; }
+  .price-card .price span { font-size: 14px; font-weight: 400; color: var(--dim); }
+  .price-card .sub { font-size: 13px; color: var(--dim); margin-bottom: 20px; }
+  .price-card ul { list-style: none; font-size: 13px; }
+  .price-card ul li { padding: 4px 0; color: var(--dim); }
+  .price-card ul li::before { content: '✓ '; color: var(--green); font-weight: 700; }
+
+  /* CTA */
+  .cta { text-align: center; padding: 0 0 80px; }
+  .cta h2 { font-size: 28px; margin-bottom: 8px; }
+  .cta p { color: var(--dim); margin-bottom: 24px; }
+
+  /* Email form */
+  .email-form { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .email-form input {
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 15px;
+    min-width: 280px;
+    outline: none;
+  }
+  .email-form input:focus { border-color: var(--accent); }
+  .email-form button {
+    padding: 12px 28px; border-radius: 10px;
+    background: #fff; color: #0a0a0c;
+    border: none; font-size: 15px; font-weight: 600;
+    cursor: pointer;
+  }
+  .email-form button:hover { background: #e4e4e8; }
+
+  footer {
+    text-align: center; padding: 40px 0;
+    font-size: 13px; color: var(--dim);
+    border-top: 1px solid var(--border);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 34px; }
+    .hero { padding: 60px 0 40px; }
+    .pain { padding: 28px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="badge">Open Source · MIT License</div>
+    <h1>A status page that doesn't<br>cost $79/month for a green dot.</h1>
+    <p>Self-hosted. Single Docker container. Built-in monitoring, incident management, and subscriber notifications. 10MB RAM. One command to deploy.</p>
+    <div class="btn-group">
+      <a href="#get-started" class="btn btn-primary">🚀 docker run uptix</a>
+      <a href="https://github.com/uptix/uptix" class="btn btn-secondary">⭐ Star on GitHub</a>
+    </div>
+    <!-- Demo status bar -->
+    <div class="demo-status">
+      <span class="dot green"></span><span class="service-name">API Gateway</span><span class="uptime">99.97% uptime</span>
+      <span class="dot green"></span><span class="service-name">Database</span><span class="uptime">99.99%</span>
+      <span class="dot green"></span><span class="service-name">Dashboard</span><span class="uptime">99.95%</span>
+      <span class="dot green"></span><span class="service-name">CDN</span><span class="uptime">100%</span>
+    </div>
+  </section>
+
+  <!-- Pain points -->
+  <section class="pain">
+    <h2>The status page landscape is broken.</h2>
+    <p>Here's what every team hits when they need a simple status page:</p>
+    <div class="pain-grid">
+      <div class="pain-card">
+        <div class="icon">💰</div>
+        <h3>Atlassian Statuspage: $29–1499/mo</h3>
+        <p>For a green dot. With no built-in monitoring. And you need an Atlassian account. Small teams pay enterprise prices.</p>
+      </div>
+      <div class="pain-card">
+        <div class="icon">💀</div>
+        <h3>Cachet: dead since 2020</h3>
+        <p>The v3 rewrite has been "almost done" for three years. No commits. PHP 7.4. The community gave up waiting.</p>
+      </div>
+      <div class="pain-card">
+        <div class="icon">🚫</div>
+        <h3>Uptime Kuma: no API, no incidents</h3>
+        <p>Great monitoring. But no REST API, no incident lifecycle, no subscriber emails. SQLite only. Doesn't scale past one node.</p>
+      </div>
+      <div class="pain-card">
+        <div class="icon">🏋️</div>
+        <h3>OneUptime: 4GB RAM minimum</h3>
+        <p>You wanted a status page. You got Kubernetes, APM, traces, and logs. Overkill for 99% of teams.</p>
+      </div>
+      <div class="pain-card">
+        <div class="icon">📈</div>
+        <h3>Hosted tools: pricing cliffs everywhere</h3>
+        <p>Instatus Pro → Business is a 15× jump. Better Stack charges per responder. You'll never predict next month's bill.</p>
+      </div>
+      <div class="pain-card">
+        <div class="icon">🔌</div>
+        <h3>Two-tool sprawl</h3>
+        <p>Monitoring over here. Status page over there. Sync them manually. Hope nothing breaks at 3 AM while you're stitching data together.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <h2>What Uptix does differently</h2>
+    <p>One binary, one Docker container, one command. Everything included.</p>
+    <div class="feat-grid">
+      <div class="feat-card">
+        <div class="f-icon">🔍</div>
+        <h3>Built-in monitoring</h3>
+        <p>HTTP, TCP, DNS, SSL expiry, cron heartbeats. No external service needed. Configurable intervals down to 30 seconds.</p>
+      </div>
+      <div class="feat-card">
+        <div class="f-icon">📋</div>
+        <h3>Full incident lifecycle</h3>
+        <p>Investigating → Identified → Monitoring → Resolved. Auto-create incidents from failed checks. Post updates in one click.</p>
+      </div>
+      <div class="feat-card">
+        <div class="f-icon">📧</div>
+        <h3>Subscriber notifications</h3>
+        <p>Email, webhook, Slack, Discord. Users subscribe once, get pushed updates for every incident. No more "is it just me?"</p>
+      </div>
+      <div class="feat-card">
+        <div class="f-icon">🔌</div>
+        <h3>REST API + Webhooks</h3>
+        <p>Create incidents from CI/CD. Update status from Terraform. Integrate with anything. Full OpenAPI spec.</p>
+      </div>
+      <div class="feat-card">
+        <div class="f-icon">🪶</div>
+        <h3>Actually lightweight</h3>
+        <p>Single Go binary. Under 30MB Docker image. Uses ~10MB RAM at idle. Runs on a $5 VPS. No Kubernetes. No PhD required.</p>
+      </div>
+      <div class="feat-card">
+        <div class="f-icon">🎨</div>
+        <h3>Beautiful out of the box</h3>
+        <p>Dark mode, custom logo, custom domain, custom CSS. Looks professional on day one. Your customers will trust you more.</p>
+      </div>
+      <div class="feat-card">
+        <div class="f-icon">💾</div>
+        <h3>PostgreSQL or SQLite</h3>
+        <p>Start with SQLite for a single server. Scale to PostgreSQL when you need HA. No migration headaches.</p>
+      </div>
+      <div class="feat-card">
+        <div class="f-icon">🔄</div>
+        <h3>Recurring maintenance windows</h3>
+        <p>Schedule weekly/monthly maintenance. Auto-creates and auto-resolves. No more "why is it down every Sunday at 2 AM" panic.</p>
+      </div>
+      <div class="feat-card">
+        <div class="f-icon">🤖</div>
+        <h3>MCP server for AI agents</h3>
+        <p>Let Claude or ChatGPT query your service status directly. The first status page built for the agent era.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- One-liner -->
+  <section class="oneliner">
+    <code>$ docker run -d -p 8080:8080 -v uptix-data:/data uptix/uptix:latest</code>
+  </section>
+
+  <!-- Pricing -->
+  <section class="pricing" id="pricing">
+    <h2>Pricing</h2>
+    <p>One is free forever. The other costs less than a single lunch.</p>
+    <div class="price-grid">
+      <div class="price-card">
+        <h3>Self-Hosted</h3>
+        <div class="price">$0<span>/month</span></div>
+        <div class="sub">MIT License. Your server, your data.</div>
+        <ul>
+          <li>Unlimited monitors</li>
+          <li>Unlimited status pages</li>
+          <li>Unlimited subscribers</li>
+          <li>All features included</li>
+          <li>Community support (GitHub)</li>
+          <li>You host it. You own it.</li>
+        </ul>
+      </div>
+      <div class="price-card featured">
+        <h3>Uptix Cloud</h3>
+        <div class="price">$12<span>/month</span></div>
+        <div class="sub">We host it. You sleep better.</div>
+        <ul>
+          <li>Everything in Self-Hosted</li>
+          <li>We handle updates & uptime</li>
+          <li>Managed PostgreSQL</li>
+          <li>Automatic backups</li>
+          <li>Email delivery included</li>
+          <li>Priority support</li>
+        </ul>
+      </div>
+      <div class="price-card">
+        <h3>Enterprise</h3>
+        <div class="price">$49<span>/month</span></div>
+        <div class="sub">White-label. Your brand only.</div>
+        <ul>
+          <li>Everything in Cloud</li>
+          <li>Remove Uptix branding</li>
+          <li>Custom SMTP domain</li>
+          <li>SAML/SSO</li>
+          <li>99.9% SLA</li>
+          <li>Dedicated support</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta" id="get-started">
+    <h2>Status pages should be boring.</h2>
+    <p>Deploy in 30 seconds. Forget about it until you need it. Join the waitlist for early access.</p>
+    <form class="email-form" id="waitlist-form">
+      <input type="email" name="email" id="waitlist-email" placeholder="you@example.com" required>
+      <button type="submit" id="waitlist-btn">Get Early Access →</button>
+    </form>
+    <p id="waitlist-success" style="display:none; color:var(--green); margin-top:12px; font-weight:600;">✅ You're on the list. We'll email you when Uptix launches.</p>
+    <p id="waitlist-error" style="display:none; color:var(--red); margin-top:12px;"></p>
+  </section>
+
+  <footer>
+    <p>Uptix is open source under the <a href="#">MIT License</a>. Built with Go + HTMX + PostgreSQL.</p>
+    <p style="margin-top:8px"><a href="https://github.com/uptix/uptix">GitHub</a> · <a href="#">Documentation</a> · <a href="#">Discord</a></p>
+  </footer>
+
+</div>
+
+<script>
+  document.getElementById('waitlist-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('waitlist-btn');
+    var email = document.getElementById('waitlist-email').value;
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+    try {
+      var res = await fetch('https://formspree.io/f/mgojqwga', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+      });
+      if (res.ok) {
+        document.getElementById('waitlist-form').style.display = 'none';
+        document.getElementById('waitlist-success').style.display = 'block';
+        document.getElementById('waitlist-error').style.display = 'none';
+      } else {
+        var data = await res.json();
+        document.getElementById('waitlist-error').textContent = data.error || 'Something went wrong. Please try again.';
+        document.getElementById('waitlist-error').style.display = 'block';
+      }
+    } catch(err) {
+      document.getElementById('waitlist-error').textContent = 'Network error. Please try again.';
+      document.getElementById('waitlist-error').style.display = 'block';
+    }
+    btn.textContent = 'Get Early Access →';
+    btn.disabled = false;
+  });
+</script>
+</body>
+</html>
