@@ -134,7 +134,12 @@ MIT — use it, fork it, sell it, deploy it anywhere. No strings attached.
 ---
 
 <p align="center">
-  <a href="https://uptix-mu.vercel.app/"><strong>Live Demo</strong></a> ·
-  <a href="https://github.com/xieyi138-star/uptix/issues"><strong>Request a Feature</strong></a> ·
-  <a href="https://github.com/xieyi138-star/uptix/discussions"><strong>Discussions</strong></a>
+  <a href="https://uptix-mu.vercel.app/"><strong>🌐 Live Demo</strong></a> ·
+  <a href="https://github.com/xieyi138-star/uptix/issues"><strong>💡 Request a Feature</strong></a>
+</p>
+
+<hr>
+
+<p align="center">
+  <sub>Built by <a href="https://github.com/xieyi138-star">@xieyi138-star</a> · Also check out <a href="https://github.com/xieyi138-star/scankit">ScanKit</a> — barcode + QR + OCR API</sub>
 </p>
